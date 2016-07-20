@@ -580,6 +580,7 @@ func (db *DB) slave() int {
 	return db.activedb[slave]
 }
 
+//fungsi debug
 func (db *DB) Print() {
 
 	fmt.Println("active :")
