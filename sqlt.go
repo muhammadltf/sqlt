@@ -171,12 +171,14 @@ func (db *DB) DoHeartBeat() {
 func (db *DB) Ping() error {
 	var err error
 
-	for i, val := range db.activedb {
+	// for i, val := range db.activedb {
+	for i := 0; i < len(db.activedb); i++ {
+		val := db.activedb[i]
 		err = myPing(db.sqlxdb[val])
 		name := db.stats[val].Name
 
 		if err != nil {
-			if db.length == 1 {
+			if db.length <= 1 {
 				log.Println("[SQLT] Db mati semua")
 				return err
 			}
@@ -188,6 +190,7 @@ func (db *DB) Ping() error {
 			dbLengthMutex.Lock()
 			db.length--
 			dbLengthMutex.Unlock()
+			i--
 		} else {
 			db.stats[val].Connected = true
 			db.stats[val].LastActive = time.Now().Format(time.RFC1123)
@@ -195,7 +198,9 @@ func (db *DB) Ping() error {
 		}
 	}
 
-	for i, val := range db.inactivedb {
+	// for i, val := range db.inactivedb {
+	for i := 0; i < len(db.inactivedb); i++ {
+		val := db.inactivedb[i]
 		err = db.sqlxdb[val].Ping()
 		name := db.stats[val].Name
 
@@ -211,6 +216,7 @@ func (db *DB) Ping() error {
 			dbLengthMutex.Lock()
 			db.length++
 			dbLengthMutex.Unlock()
+			i--
 		}
 	}
 
