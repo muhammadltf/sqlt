@@ -3,7 +3,6 @@ package sqlt
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -171,15 +170,14 @@ func (db *DB) DoHeartBeat() {
 func (db *DB) Ping() error {
 	var err error
 
-	// for i, val := range db.activedb {
 	for i := 0; i < len(db.activedb); i++ {
 		val := db.activedb[i]
-		err = myPing(db.sqlxdb[val])
+		err = db.sqlxdb[val].Ping()
 		name := db.stats[val].Name
 
 		if err != nil {
 			if db.length <= 1 {
-				log.Println("[SQLT] Db mati semua")
+				log.Println("[SQLT] No DB Connection")
 				return err
 			}
 
@@ -198,7 +196,6 @@ func (db *DB) Ping() error {
 		}
 	}
 
-	// for i, val := range db.inactivedb {
 	for i := 0; i < len(db.inactivedb); i++ {
 		val := db.inactivedb[i]
 		err = db.sqlxdb[val].Ping()
@@ -584,32 +581,4 @@ func (db *DB) slave() int {
 	slave := int(1 + (atomic.AddUint64(&db.count, 1) % uint64(db.length-1)))
 
 	return db.activedb[slave]
-}
-
-//fungsi debug
-func (db *DB) Print() {
-
-	fmt.Println("active :")
-	for _, val := range db.activedb {
-		err := myPing(db.sqlxdb[val])
-		fmt.Println(val, err)
-	}
-
-	fmt.Println()
-	fmt.Println("inactive :")
-	for _, val := range db.inactivedb {
-		err := myPing(db.sqlxdb[val])
-		fmt.Println(val, err)
-	}
-
-	fmt.Println()
-}
-
-func myPing(l *sqlx.DB) error {
-
-	_, err := (*l).Exec("")
-	if err != nil {
-		return err
-	}
-	return nil
 }
